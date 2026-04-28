@@ -1,34 +1,162 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Video Embed</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body {
-            margin: 0;
-            background-color: #000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-
-        iframe {
-            width: 100%;
-            max-width: 1280px;
-            height: 720px;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Personal Streamer Pro</title>
+<link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.json">
 </head>
 <body>
+<!-- Sidebar Navigation -->
+<nav class="sidebar" id="sidebar">
+  <button class="toggle" id="sidebarToggle">☰</button>
+  <h2>Menu</h2>
+  <div class="nav-links">
+    <a href="#" onclick="scrollToSection('hero')">🏠 Home</a>
+    <a href="#" onclick="focusSearch()">🔍 Search</a>
+    <a href="#" onclick="scrollToSection('continueSection')">▶️ Continue Watching</a>
+    <a href="#" onclick="scrollToSection('recommendedSection')">✨ For You</a>
+    <a href="#" onclick="scrollToSection('favoritesSection')">⭐ Favorites</a>
+    <a href="#" onclick="scrollToSection('recentSection')">🕒 Watch History</a>
+    <a href="#" onclick="scrollToSection('analyticsSection')">📊 Analytics</a>
+  </div>
+</nav>
 
-    <iframe 
-        src="https://vidsrcme.ru/embed/tv?tmdb=615&season=13&episode=06"
-        frameborder="0"
-        referrerpolicy="origin"
-        allowfullscreen>
-    </iframe>
+<div class="main-wrapper">
+  <!-- Top Bar with Search -->
+  <header class="top-bar">
+    <div class="search-container">
+      <input type="text" id="titleInput" placeholder="Search movies, series..." autocomplete="off">
+      <button id="searchBtn">Search</button>
+      <div id="autocomplete"></div>
+    </div>
+  </header>
 
+  <main class="main-content">
+    
+    <!-- Hero Billboard -->
+    <section class="hero-section" id="hero">
+      <div class="hero-bg" id="heroBg"></div>
+      <div class="hero-content">
+        <div class="hero-text">
+          <h1 id="heroTitle">Loading...</h1>
+          <div class="hero-meta" id="heroMeta"></div>
+          <p id="heroPlot" class="hero-plot"></p>
+          <div class="hero-actions">
+            <button id="heroPlayBtn" class="btn primary-btn">▶ Play</button>
+            <button id="heroMoreBtn" class="btn secondary-btn">ℹ More Info</button>
+          </div>
+        </div>
+        <img id="heroPoster" src="" alt="" class="hero-poster">
+      </div>
+    </section>
+
+    <!-- Content Rows (Carousels) -->
+    <div class="rows-container">
+      
+      <section class="content-row" id="searchSection" style="display: none;" data-row-index="0">
+        <div class="row-header">
+          <h2>Search Results</h2>
+          <div class="filters">
+            <select id="filterType" class="custom-select">
+              <option value="all">All</option>
+              <option value="movie">Movies</option>
+              <option value="series">Series</option>
+            </select>
+          </div>
+        </div>
+        <div class="carousel-wrapper">
+          <button class="scroll-btn left" onclick="scrollCarousel('searchCarousel', -1)">‹</button>
+          <div class="carousel" id="searchCarousel"></div>
+          <button class="scroll-btn right" onclick="scrollCarousel('searchCarousel', 1)">›</button>
+        </div>
+      </section>
+
+      <section class="content-row" id="continueSection" data-row-index="1">
+        <h2>Continue Watching</h2>
+        <div class="carousel-wrapper">
+          <button class="scroll-btn left" onclick="scrollCarousel('continueCarousel', -1)">‹</button>
+          <div class="carousel" id="continueCarousel"></div>
+          <button class="scroll-btn right" onclick="scrollCarousel('continueCarousel', 1)">›</button>
+        </div>
+      </section>
+
+      <!-- NEW: Recommended Section -->
+      <section class="content-row" id="recommendedSection" data-row-index="2">
+        <div class="row-header">
+          <h2 id="recommendedHeader">Recommended For You</h2>
+          <span style="font-size: 0.8rem; color: var(--accent); background: rgba(255,255,255,0.1); padding: 0.2rem 0.6rem; border-radius: 12px;">Powered by TMDB</span>
+        </div>
+        <div class="carousel-wrapper">
+          <button class="scroll-btn left" onclick="scrollCarousel('recommendedCarousel', -1)">‹</button>
+          <div class="carousel" id="recommendedCarousel"></div>
+          <button class="scroll-btn right" onclick="scrollCarousel('recommendedCarousel', 1)">›</button>
+        </div>
+      </section>
+
+      <section class="content-row" id="favoritesSection" data-row-index="3">
+        <h2>Your Favorites</h2>
+        <div class="carousel-wrapper">
+          <button class="scroll-btn left" onclick="scrollCarousel('favoritesCarousel', -1)">‹</button>
+          <div class="carousel" id="favoritesCarousel"></div>
+          <button class="scroll-btn right" onclick="scrollCarousel('favoritesCarousel', 1)">›</button>
+        </div>
+      </section>
+
+      <section class="content-row" id="recentSection" data-row-index="4">
+        <h2>Watch History</h2>
+        <div class="carousel-wrapper">
+          <button class="scroll-btn left" onclick="scrollCarousel('recentCarousel', -1)">‹</button>
+          <div class="carousel" id="recentCarousel"></div>
+          <button class="scroll-btn right" onclick="scrollCarousel('recentCarousel', 1)">›</button>
+        </div>
+      </section>
+      
+      <!-- Analytics Dashboard -->
+      <section class="content-row" id="analyticsSection">
+        <h2>Viewing Analytics</h2>
+        <div class="analytics-grid">
+          <div class="stat-card glass-panel">
+            <h3>Total Watched</h3>
+            <div class="stat-value" id="statTotalItems">0</div>
+            <div class="stat-label">Titles</div>
+          </div>
+          <div class="stat-card glass-panel">
+            <h3>Top Genre</h3>
+            <div class="stat-value" id="statTopGenre">-</div>
+            <div class="stat-label">Based on history</div>
+          </div>
+          <div class="stat-card glass-panel">
+            <h3>Avg IMDB Rating</h3>
+            <div class="stat-value" id="statAvgRating">0.0</div>
+            <div class="stat-label">Of favorites</div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- Details Modal -->
+<div id="detailsModal" class="modal-overlay" style="display:none;">
+  <div class="modal-content glass-panel" id="modalContentBox">
+    <button class="close-btn" onclick="closeModal('detailsModal')">✕</button>
+    <div class="modal-body" id="modalDetailsBody">
+      <!-- Injected via JS -->
+    </div>
+  </div>
+</div>
+
+<!-- Player Modal -->
+<div id="playerModal" class="modal-overlay player-overlay" style="display:none;">
+  <div class="player-wrapper">
+    <button class="close-btn" onclick="closePlayer()">✕</button>
+    <div id="playerContainer" class="video-container"></div>
+  </div>
+</div>
+
+<script src="script.js"></script>
 </body>
 </html>
