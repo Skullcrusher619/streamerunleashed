@@ -1,0 +1,20 @@
+{
+  "name": "streamerunleashed",
+  "version": "1.0.0",
+  "description": "My Personal Streamer Pro - A streaming content discovery platform",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx serve .",
+    "start": "npx serve ."
+  },
+  "keywords": [
+    "streaming",
+    "movies",
+    "tv-shows"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@vercel/analytics": "^1.4.1"
+  }
+}
