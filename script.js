@@ -1,5 +1,5 @@
 const omdbKey = "a8ec091b";
-const tmdbKey = "2d1e85984a53ca91efbf0a4fd3650ef9"; // Added TMDB Key
+const tmdbKey = "2d1e85984a53ca91efbf0a4fd3650ef9";
 
 // DOM Elements
 const sidebar = document.getElementById("sidebar");
@@ -10,8 +10,8 @@ const heroSection = document.getElementById("hero");
 const searchSection = document.getElementById("searchSection");
 const searchCarousel = document.getElementById("searchCarousel");
 const continueCarousel = document.getElementById("continueCarousel");
-const recommendedCarousel = document.getElementById("recommendedCarousel"); // New Carousel
-const recommendedHeader = document.getElementById("recommendedHeader");
+const recommendedCarousel = document.getElementById("recommendedCarousel"); 
+const genreSelect = document.getElementById("genreSelect"); // New Interactive Dropdown
 const favoritesCarousel = document.getElementById("favoritesCarousel");
 const recentCarousel = document.getElementById("recentCarousel");
 const detailsModal = document.getElementById("detailsModal");
@@ -20,7 +20,7 @@ const playerModal = document.getElementById("playerModal");
 const playerContainer = document.getElementById("playerContainer");
 
 let currentMedia = { imdbID: "", type: "", season: 1, episode: 1 };
-let topUserGenre = "-"; // Store globally for TMDB query
+let topUserGenre = "-"; 
 
 // TMDB Genre Mapping
 const tmdbGenreMap = {
@@ -66,34 +66,58 @@ document.getElementById("filterType").addEventListener("change", executeSearch);
 
 // Initialization
 window.addEventListener("DOMContentLoaded", async () => {
-  renderAnalytics(); // Run first to establish topUserGenre
+  setupGenreDropdown(); // Setup the interactive dropdown options
+  renderAnalytics();    // Calculates topUserGenre based on history
   loadHero();
   loadCarousels();
-  loadRecommendations(); // Trigger TMDB Engine
+  loadRecommendations(); // Fetches based on topUserGenre initially
 });
 
-// --- NEW: TMDB Recommendation Engine ---
-async function loadRecommendations() {
-  if (topUserGenre === "-" || topUserGenre === "N/A") {
-    // Fallback: Trending if no history
-    recommendedHeader.textContent = "Trending Now";
-    const res = await fetchWithCache(`https://api.themoviedb.org/3/trending/all/week?api_key=${tmdbKey}`, 'tmdb_trending');
-    renderTMDBDeck(res.results);
-    return;
+// --- NEW: Interactive TMDB Recommendation Engine ---
+function setupGenreDropdown() {
+    // Populate the dropdown with "Trending" and all TMDB genres
+    let options = `<option value="trending">Trending Now</option>`;
+    
+    // Sort genres alphabetically for the dropdown
+    const sortedGenres = Object.keys(tmdbGenreMap).sort();
+    sortedGenres.forEach(genre => {
+        options += `<option value="${genre}">${genre}</option>`;
+    });
+    
+    genreSelect.innerHTML = options;
+    
+    // Listen for manual genre changes by the user
+    genreSelect.addEventListener("change", (e) => {
+        loadRecommendations(e.target.value);
+    });
+}
+
+async function loadRecommendations(forcedGenre = null) {
+  // Determine which genre to load (User explicitly picked vs Analytics top genre)
+  let targetGenre = forcedGenre || topUserGenre;
+  
+  // If user has no history and didn't force a genre, default to trending
+  if ((targetGenre === "-" || targetGenre === "N/A") && !forcedGenre) {
+      targetGenre = "trending";
   }
 
-  // Get TMDB Genre ID based on parsed OMDB string
-  const genreId = tmdbGenreMap[topUserGenre];
-  
-  if (genreId) {
-    recommendedHeader.textContent = `Because you like ${topUserGenre}`;
-    showSkeletons(recommendedCarousel, 10);
-    // Discover movies by genre
-    const res = await fetch(`https://api.themoviedb.org/3/discover/movie?api_key=${tmdbKey}&with_genres=${genreId}&sort_by=popularity.desc`).then(r => r.json());
-    renderTMDBDeck(res.results);
+  // Ensure the UI dropdown matches what is currently loading
+  genreSelect.value = targetGenre;
+
+  showSkeletons(recommendedCarousel, 10);
+
+  if (targetGenre === "trending") {
+      const res = await fetchWithCache(`https://api.themoviedb.org/3/trending/all/week?api_key=${tmdbKey}`, 'tmdb_trending');
+      renderTMDBDeck(res.results);
   } else {
-    // Fallback
-    recommendedCarousel.innerHTML = "<p style='padding:1rem;'>Keep watching to get recommendations.</p>";
+      const genreId = tmdbGenreMap[targetGenre];
+      if (genreId) {
+        // Discover movies by specific genre ID
+        const res = await fetch(`https://api.themoviedb.org/3/discover/movie?api_key=${tmdbKey}&with_genres=${genreId}&sort_by=popularity.desc`).then(r => r.json());
+        renderTMDBDeck(res.results);
+      } else {
+        recommendedCarousel.innerHTML = "<p style='padding:1rem;'>Select a genre above to see recommendations.</p>";
+      }
   }
 }
 
@@ -102,11 +126,9 @@ async function renderTMDBDeck(tmdbResults) {
     
     recommendedCarousel.innerHTML = "";
     
-    for (const item of tmdbResults.slice(0, 15)) { // Limit to 15
-        if(!item.poster_path) continue; // Skip items without art
+    for (const item of tmdbResults.slice(0, 15)) {
+        if(!item.poster_path) continue; 
         
-        // TMDB doesn't use IMDB IDs natively in basic search, we need external IDs or just search OMDB by title
-        // For efficiency in rendering the carousel quickly, we will use TMDB poster paths directly.
         const posterUrl = `https://image.tmdb.org/t/p/w342${item.poster_path}`;
         const title = item.title || item.name;
         const year = item.release_date ? item.release_date.substring(0,4) : (item.first_air_date ? item.first_air_date.substring(0,4) : "");
@@ -114,7 +136,6 @@ async function renderTMDBDeck(tmdbResults) {
         const card = document.createElement("div");
         card.className = "result-card tmdb-card";
         card.tabIndex = 0;
-        // Store TMDB title so we can query OMDB when clicked
         card.dataset.tmdbtitle = title; 
         
         card.innerHTML = `
@@ -126,18 +147,15 @@ async function renderTMDBDeck(tmdbResults) {
         </div>
         `;
         
-        // On click, bridge the gap: Search OMDB by TMDB Title to get the IMDB ID for our player ecosystem
         card.onclick = async () => {
              modalDetailsBody.innerHTML = '<div style="text-align:center;width:100%;"><p>Bridging databases...</p></div>';
              detailsModal.style.display = "flex";
              
-             // Try to find the exact IMDB ID via OMDB title search
              const bridgeData = await fetchWithCache(`https://www.omdbapi.com/?t=${encodeURIComponent(title)}&y=${year}&apikey=${omdbKey}`);
              
              if(bridgeData.Response !== "False") {
                  loadDetails(bridgeData.imdbID);
              } else {
-                 // Fallback if exact match fails
                  const looseBridge = await fetchWithCache(`https://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${omdbKey}`);
                  if(looseBridge.Response !== "False") {
                      loadDetails(looseBridge.imdbID);
@@ -155,7 +173,7 @@ async function renderTMDBDeck(tmdbResults) {
 async function loadHero() {
   const favs = getList("favorites");
   const recents = getList("recent");
-  let heroId = "tt0133093"; // The Matrix default
+  let heroId = "tt0133093"; 
 
   if (favs.length > 0) heroId = favs[Math.floor(Math.random() * favs.length)].imdbID;
   else if (recents.length > 0) heroId = recents[0];
@@ -280,8 +298,6 @@ async function loadCarousels() {
     const recentData = await Promise.all(recents.map(id => fetchWithCache(`https://www.omdbapi.com/?i=${id}&apikey=${omdbKey}`, id)));
     renderCarouselCards(recentCarousel, recentData.filter(d => d.Response !== "False"));
   } else recentCarousel.innerHTML = "<p style='padding:1rem;color:#666;'>No watch history.</p>";
-  
-  // Continue watching logic could go here if state was saved
 }
 
 // --- Details Modal ---

@@ -5,14 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>My Personal Streamer Pro</title>
 <link rel="stylesheet" href="style.css">
-<link rel="manifest" href="manifest.json">
-<!-- Vercel Web Analytics -->
-<script>
-  window.va = function () {
-    (window.vaq = window.vaq || []).push(arguments);
-  };
-</script>
-<script defer src="https://cdn.vercel-insights.com/v1/script.js"></script>
 </head>
 <body>
 <!-- Sidebar Navigation -->
@@ -89,11 +81,16 @@
         </div>
       </section>
 
-      <!-- NEW: Recommended Section -->
+      <!-- NEW: Interactive Recommended Section -->
       <section class="content-row" id="recommendedSection" data-row-index="2">
-        <div class="row-header">
-          <h2 id="recommendedHeader">Recommended For You</h2>
-          <span style="font-size: 0.8rem; color: var(--accent); background: rgba(255,255,255,0.1); padding: 0.2rem 0.6rem; border-radius: 12px;">Powered by TMDB</span>
+        <div class="row-header" style="display: flex; flex-wrap: wrap; align-items: center; gap: 1rem;">
+          <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+              <h2 style="margin:0;">Because you like</h2>
+              <select id="genreSelect" class="custom-select" style="font-size: 1.2rem; padding: 0.2rem 2.5rem 0.2rem 1rem; color: var(--text); border-color: transparent; background-color: rgba(255,255,255,0.1); font-weight: bold; margin: 0; box-shadow: none;">
+                  <!-- Populated by JS -->
+              </select>
+          </div>
+          <span style="font-size: 0.8rem; color: var(--accent); background: rgba(255,255,255,0.1); padding: 0.2rem 0.6rem; border-radius: 12px; margin-left: auto;">Powered by TMDB</span>
         </div>
         <div class="carousel-wrapper">
           <button class="scroll-btn left" onclick="scrollCarousel('recommendedCarousel', -1)">‹</button>
