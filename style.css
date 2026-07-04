@@ -86,7 +86,6 @@ body { margin: 0; font-family: "Inter", sans-serif; background: var(--bg-gradien
 /* Result Cards & Animations */
 .result-card { flex: 0 0 160px; scroll-snap-align: start; position: relative; border-radius: 8px; overflow: hidden; cursor: pointer; transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s; aspect-ratio: 2/3; background: #1a1a1a; outline: none; }
 .result-card img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease; }
-/* Ken Burns effect on prolonged hover */
 .result-card:hover img, .result-card.keyboard-focus img { transform: scale(1.15) translate(-2%, -2%); transition: transform 8s linear 0.5s; }
 
 .card-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.2) 50%, transparent 100%); opacity: 0; transition: 0.3s; display: flex; flex-direction: column; justify-content: flex-end; padding: 1rem; z-index: 2; }
