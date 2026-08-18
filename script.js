@@ -1,3 +1,4 @@
+// script.js
 const omdbKey = "a8ec091b";
 const tmdbKey = "2d1e85984a53ca91efbf0a4fd3650ef9";
 
@@ -11,7 +12,7 @@ const searchSection = document.getElementById("searchSection");
 const searchCarousel = document.getElementById("searchCarousel");
 const continueCarousel = document.getElementById("continueCarousel");
 const recommendedCarousel = document.getElementById("recommendedCarousel"); 
-const genreSelect = document.getElementById("genreSelect"); // New Interactive Dropdown
+const genreSelect = document.getElementById("genreSelect");
 const favoritesCarousel = document.getElementById("favoritesCarousel");
 const recentCarousel = document.getElementById("recentCarousel");
 const detailsModal = document.getElementById("detailsModal");
@@ -19,7 +20,7 @@ const modalDetailsBody = document.getElementById("modalDetailsBody");
 const playerModal = document.getElementById("playerModal");
 const playerContainer = document.getElementById("playerContainer");
 
-let currentMedia = { imdbID: "", type: "", season: 1, episode: 1 };
+let currentMedia = { imdbID: "", title: "", poster: "", type: "", season: 1, episode: 1 };
 let topUserGenre = "-"; 
 
 // TMDB Genre Mapping
@@ -55,7 +56,7 @@ async function fetchWithCache(url, idKey = null) {
 
 // Storage Utils
 const getList = key => JSON.parse(localStorage.getItem(key) || "[]");
-const saveList = (key, val) => { localStorage.setItem(key, JSON.stringify(val)); renderAnalytics(); }
+const saveList = (key, val) => { localStorage.setItem(key, JSON.stringify(val)); renderAnalytics(); };
 
 // Event Listeners
 document.getElementById("sidebarToggle").addEventListener("click", () => sidebar.classList.toggle("show"));
@@ -66,44 +67,35 @@ document.getElementById("filterType").addEventListener("change", executeSearch);
 
 // Initialization
 window.addEventListener("DOMContentLoaded", async () => {
-  setupGenreDropdown(); // Setup the interactive dropdown options
-  renderAnalytics();    // Calculates topUserGenre based on history
+  setupGenreDropdown();
+  renderAnalytics();
   loadHero();
   loadCarousels();
-  loadRecommendations(); // Fetches based on topUserGenre initially
+  loadRecommendations();
 });
 
-// --- NEW: Interactive TMDB Recommendation Engine ---
+// --- Interactive TMDB Recommendation Engine ---
 function setupGenreDropdown() {
-    // Populate the dropdown with "Trending" and all TMDB genres
     let options = `<option value="trending">Trending Now</option>`;
-    
-    // Sort genres alphabetically for the dropdown
     const sortedGenres = Object.keys(tmdbGenreMap).sort();
     sortedGenres.forEach(genre => {
         options += `<option value="${genre}">${genre}</option>`;
     });
     
     genreSelect.innerHTML = options;
-    
-    // Listen for manual genre changes by the user
     genreSelect.addEventListener("change", (e) => {
         loadRecommendations(e.target.value);
     });
 }
 
 async function loadRecommendations(forcedGenre = null) {
-  // Determine which genre to load (User explicitly picked vs Analytics top genre)
   let targetGenre = forcedGenre || topUserGenre;
   
-  // If user has no history and didn't force a genre, default to trending
   if ((targetGenre === "-" || targetGenre === "N/A") && !forcedGenre) {
       targetGenre = "trending";
   }
 
-  // Ensure the UI dropdown matches what is currently loading
   genreSelect.value = targetGenre;
-
   showSkeletons(recommendedCarousel, 10);
 
   if (targetGenre === "trending") {
@@ -112,7 +104,6 @@ async function loadRecommendations(forcedGenre = null) {
   } else {
       const genreId = tmdbGenreMap[targetGenre];
       if (genreId) {
-        // Discover movies by specific genre ID
         const res = await fetch(`https://api.themoviedb.org/3/discover/movie?api_key=${tmdbKey}&with_genres=${genreId}&sort_by=popularity.desc`).then(r => r.json());
         renderTMDBDeck(res.results);
       } else {
@@ -168,7 +159,6 @@ async function renderTMDBDeck(tmdbResults) {
     }
 }
 
-
 // --- Hero Billboard ---
 async function loadHero() {
   const favs = getList("favorites");
@@ -190,7 +180,7 @@ async function loadHero() {
   document.getElementById("heroPoster").src = posterUrl;
 
   document.getElementById("heroPlayBtn").onclick = () => {
-    currentMedia = { imdbID: data.imdbID, type: data.Type, season: 1, episode: 1 };
+    currentMedia = { imdbID: data.imdbID, title: data.Title, poster: posterUrl, type: data.Type, season: 1, episode: 1 };
     openPlayer();
   };
   document.getElementById("heroMoreBtn").onclick = () => loadDetails(data.imdbID);
@@ -267,18 +257,21 @@ async function executeSearch() {
 // --- Carousels ---
 function renderCarouselCards(container, items) {
   container.innerHTML = "";
-  items.forEach((item, index) => {
-    const poster = item.Poster !== "N/A" ? item.Poster : "https://via.placeholder.com/210x300?text=No+Image";
+  items.forEach((item) => {
+    const poster = (item.Poster && item.Poster !== "N/A") ? item.Poster : (item.poster || "https://via.placeholder.com/210x300?text=No+Image");
+    const title = item.Title || item.title;
+    const year = item.Year || item.subtitle || "";
+    
     const card = document.createElement("div");
     card.className = "result-card";
-    card.tabIndex = 0; // Make focusable
+    card.tabIndex = 0;
     card.dataset.imdbid = item.imdbID || item;
     card.innerHTML = `
-      <img src="${poster}" loading="lazy" alt="${item.Title}">
+      <img src="${poster}" loading="lazy" alt="${title}">
       <div class="card-overlay">
         <div class="play-icon">▶</div>
-        <h4>${item.Title}</h4>
-        <p>${item.Year}</p>
+        <h4>${title}</h4>
+        <p>${year}</p>
       </div>
     `;
     card.onclick = () => loadDetails(item.imdbID || item); 
@@ -287,9 +280,21 @@ function renderCarouselCards(container, items) {
 }
 
 async function loadCarousels() {
+  const continueList = getList("continue_watching");
   const favs = getList("favorites");
   const recents = getList("recent");
   
+  if (continueList.length > 0) {
+    renderCarouselCards(continueCarousel, continueList.map(c => ({
+      imdbID: c.imdbID,
+      title: c.title,
+      poster: c.poster,
+      subtitle: c.type === "series" ? `S${c.season} E${c.episode}` : "Movie"
+    })));
+  } else {
+    continueCarousel.innerHTML = "<p style='padding:1rem;color:#666;'>No active titles to continue.</p>";
+  }
+
   if(favs.length > 0) renderCarouselCards(favoritesCarousel, favs.map(f => ({imdbID: f.imdbID, Title: f.title, Poster: f.poster, Year: ""})));
   else favoritesCarousel.innerHTML = "<p style='padding:1rem;color:#666;'>No favorites yet.</p>";
 
@@ -313,14 +318,32 @@ async function loadDetails(imdbID) {
       return;
   }
   
-  currentMedia = { imdbID: imdbID, type: data.Type, season: 1, episode: 1 };
+  const posterUrl = data.Poster !== "N/A" ? data.Poster : "https://via.placeholder.com/300x450";
+  
+  // Check if we have saved progress for this media
+  const continueList = getList("continue_watching");
+  const savedProgress = continueList.find(item => item.imdbID === imdbID);
+  
+  currentMedia = { 
+    imdbID: imdbID, 
+    title: data.Title,
+    poster: posterUrl,
+    type: data.Type, 
+    season: savedProgress ? savedProgress.season : 1, 
+    episode: savedProgress ? savedProgress.episode : 1 
+  };
+
   const favs = getList("favorites");
   const isFav = favs.some(f => f.imdbID === imdbID);
 
   let tvControls = "";
   if (data.Type === "series") {
-    const totalSeasons = parseInt(data.totalSeasons) || 1;
-    let seasonOpts = Array.from({length:totalSeasons},(_,i)=>`<option value="${i+1}">Season ${i+1}</option>`).join("");
+    const totalSeasons = parseInt(data.totalSeasons, 10) || 1;
+    let seasonOpts = Array.from({length: totalSeasons}, (_, i) => {
+      const sNum = i + 1;
+      return `<option value="${sNum}" ${sNum === Number(currentMedia.season) ? 'selected' : ''}>Season ${sNum}</option>`;
+    }).join("");
+
     tvControls = `
       <div id="tvSelector">
         <div style="flex:1;">
@@ -338,7 +361,7 @@ async function loadDetails(imdbID) {
   modalDetailsBody.innerHTML = `
     <div class="modal-details-layout">
       <div class="modal-poster">
-        <img src="${data.Poster !== "N/A" ? data.Poster : "https://via.placeholder.com/300x450"}" alt="">
+        <img src="${posterUrl}" alt="${data.Title}">
       </div>
       <div class="modal-info">
         <h2>${data.Title}</h2>
@@ -353,7 +376,7 @@ async function loadDetails(imdbID) {
 
         <div class="modal-actions">
           <button class="btn primary-btn" onclick="openPlayer()">▶ Play</button>
-          <button class="btn secondary-btn" onclick="toggleFavModal('${data.Title.replace(/'/g, "\\'")}', '${data.Poster}', '${imdbID}')" id="favBtnModal">
+          <button class="btn secondary-btn" onclick="toggleFavModal('${data.Title.replace(/'/g, "\\'")}', '${posterUrl}', '${imdbID}')" id="favBtnModal">
             ${isFav ? '♥ Remove Favorite' : '♡ Add to Favorites'}
           </button>
         </div>
@@ -361,7 +384,7 @@ async function loadDetails(imdbID) {
     </div>
   `;
 
-  if (data.Type === "series") fetchEpisodes(1);
+  if (data.Type === "series") fetchEpisodes(currentMedia.season, currentMedia.episode);
   addHistory(imdbID);
   
   setTimeout(() => document.querySelector("#detailsModal .close-btn").focus(), 100);
@@ -372,16 +395,29 @@ function closeModal(id) {
   document.body.style.overflow = "auto";
 }
 
-async function fetchEpisodes(season) {
-  currentMedia.season = season;
+async function fetchEpisodes(season, targetEpisode = 1) {
+  currentMedia.season = parseInt(season, 10);
   const epSelect = document.getElementById("episodeSelect");
   epSelect.innerHTML = "<option>Loading...</option>";
+  
   const data = await fetchWithCache(`https://www.omdbapi.com/?i=${currentMedia.imdbID}&Season=${season}&apikey=${omdbKey}`);
-  if (data.Response === "False") { epSelect.innerHTML = `<option value="1">Episode 1</option>`; return; }
-  epSelect.innerHTML = data.Episodes.map((ep, i) => `<option value="${i+1}">Ep ${i+1}: ${ep.Title}</option>`).join("");
-  currentMedia.episode = epSelect.value;
+  if (data.Response === "False" || !data.Episodes) { 
+    epSelect.innerHTML = `<option value="1">Episode 1</option>`; 
+    currentMedia.episode = 1;
+    return; 
+  }
+  
+  epSelect.innerHTML = data.Episodes.map((ep, i) => {
+    const epNum = i + 1;
+    return `<option value="${epNum}" ${epNum === Number(targetEpisode) ? 'selected' : ''}>Ep ${epNum}: ${ep.Title}</option>`;
+  }).join("");
+
+  currentMedia.episode = parseInt(epSelect.value, 10);
 }
-window.updateEpisode = val => currentMedia.episode = val;
+
+window.updateEpisode = val => {
+  currentMedia.episode = parseInt(val, 10);
+};
 
 // --- Player Logic ---
 function openPlayer() {
@@ -389,11 +425,15 @@ function openPlayer() {
   playerModal.style.display = "flex";
   document.body.style.overflow = "hidden";
   
-  let src = currentMedia.type === "series" 
-    ? `https://vidsrc.sbs/embed/tv/?imdb=${currentMedia.imdbID}&season=${currentMedia.season}&episode=${currentMedia.episode}`
-    : `https://vidsrc.sbs/embed/movie/?imdb=${currentMedia.imdbID}`;
+  // vidsrc.sbs dynamic embed paths
+  const src = currentMedia.type === "series" 
+    ? `https://vidsrc.sbs/embed/tv/${currentMedia.imdbID}/${currentMedia.season}/${currentMedia.episode}`
+    : `https://vidsrc.sbs/embed/movie/${currentMedia.imdbID}`;
     
-  playerContainer.innerHTML = `<iframe src="${src}" allowfullscreen></iframe>`;
+  playerContainer.innerHTML = `<iframe src="${src}" frameborder="0" allowfullscreen allow="autoplay; encrypted-media" referrerpolicy="origin"></iframe>`;
+
+  // Track into continue watching
+  saveProgress(currentMedia);
 }
 
 function closePlayer() {
@@ -401,6 +441,22 @@ function closePlayer() {
   playerContainer.innerHTML = "";
   document.body.style.overflow = "auto";
   loadCarousels(); 
+}
+
+function saveProgress(media) {
+  let continueList = getList("continue_watching");
+  continueList = continueList.filter(item => item.imdbID !== media.imdbID);
+  continueList.unshift({
+    imdbID: media.imdbID,
+    title: media.title,
+    poster: media.poster,
+    type: media.type,
+    season: media.season,
+    episode: media.episode,
+    timestamp: Date.now()
+  });
+  if (continueList.length > 20) continueList.pop();
+  saveList("continue_watching", continueList);
 }
 
 window.toggleFavModal = (title, poster, imdbID) => {
@@ -416,7 +472,7 @@ window.toggleFavModal = (title, poster, imdbID) => {
   }
   saveList("favorites", favs);
   loadCarousels(); 
-}
+};
 
 function addHistory(imdbID) {
   const hist = getList("recent");
