@@ -390,8 +390,8 @@ function openPlayer() {
   document.body.style.overflow = "hidden";
   
   let src = currentMedia.type === "series" 
-    ? `https://vidsrcme.ru/embed/tv/?imdb=${currentMedia.imdbID}&season=${currentMedia.season}&episode=${currentMedia.episode}`
-    : `https://vidsrcme.ru/embed/movie/?imdb=${currentMedia.imdbID}`;
+    ? `https://vidsrc.sbs/embed/tv/?imdb=${currentMedia.imdbID}&season=${currentMedia.season}&episode=${currentMedia.episode}`
+    : `https://vidsrc.sbs/embed/movie/?imdb=${currentMedia.imdbID}`;
     
   playerContainer.innerHTML = `<iframe src="${src}" allowfullscreen></iframe>`;
 }
