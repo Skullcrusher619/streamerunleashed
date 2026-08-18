@@ -11,7 +11,7 @@ const searchSection = document.getElementById("searchSection");
 const searchCarousel = document.getElementById("searchCarousel");
 const continueCarousel = document.getElementById("continueCarousel");
 const recommendedCarousel = document.getElementById("recommendedCarousel"); 
-const genreSelect = document.getElementById("genreSelect");
+const genreSelect = document.getElementById("genreSelect"); // New Interactive Dropdown
 const favoritesCarousel = document.getElementById("favoritesCarousel");
 const recentCarousel = document.getElementById("recentCarousel");
 const detailsModal = document.getElementById("detailsModal");
@@ -66,17 +66,19 @@ document.getElementById("filterType").addEventListener("change", executeSearch);
 
 // Initialization
 window.addEventListener("DOMContentLoaded", async () => {
-  setupGenreDropdown();
-  renderAnalytics();
+  setupGenreDropdown(); // Setup the interactive dropdown options
+  renderAnalytics();    // Calculates topUserGenre based on history
   loadHero();
   loadCarousels();
-  loadRecommendations();
+  loadRecommendations(); // Fetches based on topUserGenre initially
 });
 
-// --- Interactive TMDB Recommendation Engine ---
+// --- NEW: Interactive TMDB Recommendation Engine ---
 function setupGenreDropdown() {
+    // Populate the dropdown with "Trending" and all TMDB genres
     let options = `<option value="trending">Trending Now</option>`;
     
+    // Sort genres alphabetically for the dropdown
     const sortedGenres = Object.keys(tmdbGenreMap).sort();
     sortedGenres.forEach(genre => {
         options += `<option value="${genre}">${genre}</option>`;
@@ -84,19 +86,24 @@ function setupGenreDropdown() {
     
     genreSelect.innerHTML = options;
     
+    // Listen for manual genre changes by the user
     genreSelect.addEventListener("change", (e) => {
         loadRecommendations(e.target.value);
     });
 }
 
 async function loadRecommendations(forcedGenre = null) {
+  // Determine which genre to load (User explicitly picked vs Analytics top genre)
   let targetGenre = forcedGenre || topUserGenre;
   
+  // If user has no history and didn't force a genre, default to trending
   if ((targetGenre === "-" || targetGenre === "N/A") && !forcedGenre) {
       targetGenre = "trending";
   }
 
+  // Ensure the UI dropdown matches what is currently loading
   genreSelect.value = targetGenre;
+
   showSkeletons(recommendedCarousel, 10);
 
   if (targetGenre === "trending") {
@@ -105,6 +112,7 @@ async function loadRecommendations(forcedGenre = null) {
   } else {
       const genreId = tmdbGenreMap[targetGenre];
       if (genreId) {
+        // Discover movies by specific genre ID
         const res = await fetch(`https://api.themoviedb.org/3/discover/movie?api_key=${tmdbKey}&with_genres=${genreId}&sort_by=popularity.desc`).then(r => r.json());
         renderTMDBDeck(res.results);
       } else {
@@ -263,7 +271,7 @@ function renderCarouselCards(container, items) {
     const poster = item.Poster !== "N/A" ? item.Poster : "https://via.placeholder.com/210x300?text=No+Image";
     const card = document.createElement("div");
     card.className = "result-card";
-    card.tabIndex = 0; 
+    card.tabIndex = 0; // Make focusable
     card.dataset.imdbid = item.imdbID || item;
     card.innerHTML = `
       <img src="${poster}" loading="lazy" alt="${item.Title}">
@@ -375,17 +383,17 @@ async function fetchEpisodes(season) {
 }
 window.updateEpisode = val => currentMedia.episode = val;
 
-// --- Player Logic (UPDATED TO MULTIEMBED) ---
+// --- Player Logic ---
 function openPlayer() {
   detailsModal.style.display = "none"; 
   playerModal.style.display = "flex";
   document.body.style.overflow = "hidden";
   
   let src = currentMedia.type === "series" 
-    ? `https://multiembed.mov/?video_id=${currentMedia.imdbID}&s=${currentMedia.season}&e=${currentMedia.episode}`
-    : `https://multiembed.mov/?video_id=${currentMedia.imdbID}`;
+    ? `https://vsembed.ru/embed/tv?imdb=${currentMedia.imdbID}&season=${currentMedia.season}&episode=${currentMedia.episode}`
+    : `https://vsembed.ru/embed/movie?imdb=${currentMedia.imdbID}`;
     
-  playerContainer.innerHTML = `<iframe src="${src}" allowfullscreen style="width: 100%; height: 100%; border: none;"></iframe>`;
+  playerContainer.innerHTML = `<iframe src="${src}" allowfullscreen></iframe>`;
 }
 
 function closePlayer() {
