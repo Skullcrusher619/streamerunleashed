@@ -44,7 +44,9 @@ async function fetchWithCache(url, idKey = null) {
   try {
     const res = await fetch(url);
     const data = await res.json();
-    if (data.Response !== "False" && !data.success_false && idKey) {
+    const isOmdbError = data.Response === "False";
+    const isTmdbError = data.success === false;
+    if (!isOmdbError && !isTmdbError && idKey) {
       cache[idKey] = { data: data, ts: Date.now() };
       setCache(cache);
     }
@@ -58,6 +60,14 @@ async function fetchWithCache(url, idKey = null) {
 // Storage Utils
 const getList = key => JSON.parse(localStorage.getItem(key) || "[]");
 const saveList = (key, val) => { localStorage.setItem(key, JSON.stringify(val)); renderAnalytics(); };
+
+// Escaping helper - used whenever API/user text is inserted via innerHTML
+function escapeHtml(str) {
+  if (str === undefined || str === null) return "";
+  return String(str).replace(/[&<>"']/g, ch => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[ch]));
+}
 
 // Feedback Utilities
 function showToast(message) {
@@ -83,12 +93,63 @@ document.getElementById("sidebarToggle").addEventListener("click", () => sidebar
 searchBtn.addEventListener("click", executeSearch);
 
 let timeoutId;
+let acItems = [];
+let acIndex = -1;
+
 searchInput.addEventListener("input", () => {
     clearTimeout(timeoutId);
+    acIndex = -1;
     timeoutId = setTimeout(showAutocomplete, 300);
 });
 
+searchInput.addEventListener("keydown", e => {
+  const isOpen = autocompleteDiv.style.display !== "none" && acItems.length > 0;
+
+  if (e.key === "ArrowDown") {
+    e.preventDefault();
+    if (!isOpen) return;
+    acIndex = (acIndex + 1) % acItems.length;
+    setAcFocus();
+  } else if (e.key === "ArrowUp") {
+    e.preventDefault();
+    if (!isOpen) return;
+    acIndex = (acIndex - 1 + acItems.length) % acItems.length;
+    setAcFocus();
+  } else if (e.key === "Enter") {
+    e.preventDefault();
+    if (isOpen && acIndex > -1) {
+      acItems[acIndex].click();
+    } else {
+      autocompleteDiv.style.display = "none";
+      executeSearch();
+    }
+  } else if (e.key === "Escape") {
+    autocompleteDiv.style.display = "none";
+  }
+});
+
+function setAcFocus() {
+  acItems.forEach((el, i) => el.classList.toggle("focused", i === acIndex));
+  if (acIndex > -1) acItems[acIndex].scrollIntoView({ block: "nearest" });
+}
+
 document.addEventListener("click", e => { if (!e.target.closest('.search-container')) autocompleteDiv.style.display = "none"; });
+
+// Keyboard focus treatment for dynamically-created result/skeleton cards
+document.addEventListener("focusin", e => {
+  const card = e.target.closest(".result-card");
+  if (card) card.classList.add("keyboard-focus");
+});
+document.addEventListener("focusout", e => {
+  const card = e.target.closest(".result-card");
+  if (card) card.classList.remove("keyboard-focus");
+});
+document.addEventListener("keydown", e => {
+  if ((e.key === "Enter" || e.key === " ") && document.activeElement && document.activeElement.classList.contains("result-card")) {
+    e.preventDefault();
+    document.activeElement.click();
+  }
+});
 document.getElementById("filterType").addEventListener("change", executeSearch);
 
 // Initialization
@@ -147,25 +208,25 @@ async function renderTMDBDeck(tmdbResults) {
         card.className = "result-card tmdb-card";
         card.tabIndex = 0;
         card.innerHTML = `
-        <img src="${posterUrl}" loading="lazy" alt="${title}">
+        <img src="${posterUrl}" loading="lazy" alt="${escapeHtml(title)}">
         <div class="card-overlay">
             <div class="play-icon">▶</div>
-            <h4>${title}</h4>
-            <p>${year}</p>
+            <h4>${escapeHtml(title)}</h4>
+            <p>${escapeHtml(year)}</p>
         </div>`;
         
         card.onclick = async () => {
              modalDetailsBody.innerHTML = '<div style="text-align:center;width:100%;"><p>Bridging databases...</p></div>';
              detailsModal.style.display = "flex";
              
-             const bridgeData = await fetchWithCache(`https://www.omdbapi.com/?t=${encodeURIComponent(title)}&y=${year}&apikey=${omdbKey}`);
+             const bridgeData = await fetchWithCache(`https://www.omdbapi.com/?t=${encodeURIComponent(title)}&y=${year}&apikey=${omdbKey}`, `bridge_${item.id}_${year}`);
              
              if(bridgeData.Response !== "False") {
                  loadDetails(bridgeData.imdbID, item.id);
              } else {
-                 const looseBridge = await fetchWithCache(`https://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${omdbKey}`);
+                 const looseBridge = await fetchWithCache(`https://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${omdbKey}`, `bridge_${item.id}`);
                  if(looseBridge.Response !== "False") loadDetails(looseBridge.imdbID, item.id);
-                 else modalDetailsBody.innerHTML = `<div style="text-align:center;width:100%;color:red;">Could not find streaming source for ${title}</div>`;
+                 else modalDetailsBody.innerHTML = `<div style="text-align:center;width:100%;color:red;">Could not find streaming source for ${escapeHtml(title)}</div>`;
              }
         };
         recommendedCarousel.appendChild(card);
@@ -185,7 +246,7 @@ async function loadHero() {
 
   document.getElementById("heroTitle").textContent = data.Title;
   document.getElementById("heroPlot").textContent = data.Plot;
-  document.getElementById("heroMeta").innerHTML = `<span>${data.Rated}</span> <span>${data.Year}</span> <span>⭐ ${data.imdbRating}</span>`;
+  document.getElementById("heroMeta").innerHTML = `<span>${escapeHtml(data.Rated)}</span> <span>${escapeHtml(data.Year)}</span> <span>⭐ ${escapeHtml(data.imdbRating)}</span>`;
   
   const posterUrl = data.Poster !== "N/A" ? data.Poster : "https://via.placeholder.com/300x450?text=No+Image";
   document.getElementById("heroBg").style.backgroundImage = `url('${posterUrl}')`;
@@ -221,6 +282,8 @@ function showSkeletons(container, count = 8) {
 
 async function showAutocomplete() {
   const query = searchInput.value.trim();
+  acItems = [];
+  acIndex = -1;
   if (query.length < 2) { autocompleteDiv.style.display = "none"; return; }
   
   autocompleteDiv.style.display = "block";
@@ -236,10 +299,11 @@ async function showAutocomplete() {
   data.Search.slice(0, 5).forEach(item => {
     const div = document.createElement("div"); div.className = "ac-item";
     const img = item.Poster !== "N/A" ? item.Poster : "https://via.placeholder.com/30x45";
-    div.innerHTML = `<img src="${img}"> <div><strong>${item.Title}</strong><br><small>${item.Year}</small></div>`;
+    div.innerHTML = `<img src="${img}"> <div><strong>${escapeHtml(item.Title)}</strong><br><small>${escapeHtml(item.Year)}</small></div>`;
     div.onclick = () => { searchInput.value = item.Title; autocompleteDiv.style.display = "none"; executeSearch(); };
     autocompleteDiv.appendChild(div);
   });
+  acItems = Array.from(autocompleteDiv.children);
 }
 
 async function executeSearch() {
@@ -276,11 +340,11 @@ function renderCarouselCards(container, items) {
     card.tabIndex = 0;
     card.dataset.imdbid = item.imdbID || item;
     card.innerHTML = `
-      <img src="${poster}" loading="lazy" alt="${title}">
+      <img src="${poster}" loading="lazy" alt="${escapeHtml(title)}">
       <div class="card-overlay">
         <div class="play-icon">▶</div>
-        <h4>${title}</h4>
-        <p>${year}</p>
+        <h4>${escapeHtml(title)}</h4>
+        <p>${escapeHtml(year)}</p>
       </div>
     `;
     card.onclick = () => loadDetails(item.imdbID || item); 
@@ -356,25 +420,29 @@ async function loadDetails(imdbID, tmdbId = null) {
 
   modalDetailsBody.innerHTML = `
     <div class="modal-details-layout">
-      <div class="modal-poster"><img src="${posterUrl}" alt="${data.Title}"></div>
+      <div class="modal-poster"><img src="${posterUrl}" alt="${escapeHtml(data.Title)}"></div>
       <div class="modal-info">
-        <h2>${data.Title}</h2>
+        <h2>${escapeHtml(data.Title)}</h2>
         <div class="modal-meta">
-          <span>${data.Year}</span> • <span>${data.Rated}</span> • <span>${data.Runtime}</span> • <span>⭐ ${data.imdbRating}</span>
+          <span>${escapeHtml(data.Year)}</span><span>${escapeHtml(data.Rated)}</span><span>${escapeHtml(data.Runtime)}</span><span>⭐ ${escapeHtml(data.imdbRating)}</span>
         </div>
-        <p><strong>Genre:</strong> ${data.Genre}</p>
-        <p><strong>Cast:</strong> ${data.Actors}</p>
-        <p style="margin-top:1rem; line-height:1.6;">${data.Plot}</p>
+        <p><strong>Genre:</strong> ${escapeHtml(data.Genre)}</p>
+        <p><strong>Cast:</strong> ${escapeHtml(data.Actors)}</p>
+        <p style="margin-top:1rem; line-height:1.6;">${escapeHtml(data.Plot)}</p>
         ${tvControls}
         <div class="modal-actions">
           <button class="btn primary-btn" onclick="openPlayer()">▶ Play</button>
-          <button class="btn secondary-btn" onclick="toggleFavModal('${data.Title.replace(/'/g, "\\'")}', '${posterUrl}', '${imdbID}')" id="favBtnModal">
+          <button class="btn secondary-btn" id="favBtnModal">
             ${isFav ? '♥ Remove Favorite' : '♡ Add to Favorites'}
           </button>
         </div>
       </div>
     </div>
   `;
+
+  document.getElementById("favBtnModal").addEventListener("click", () => {
+    toggleFavModal(data.Title, posterUrl, imdbID);
+  });
 
   if (data.Type === "series") fetchEpisodes(currentMedia.season, currentMedia.episode);
   addHistory(imdbID);
@@ -399,7 +467,7 @@ async function fetchEpisodes(season, targetEpisode = 1) {
     return; 
   }
   
-  epSelect.innerHTML = data.Episodes.map((ep, i) => `<option value="${i+1}" ${i+1 === Number(targetEpisode) ? 'selected' : ''}>Ep ${i+1}: ${ep.Title}</option>`).join("");
+  epSelect.innerHTML = data.Episodes.map((ep, i) => `<option value="${i+1}" ${i+1 === Number(targetEpisode) ? 'selected' : ''}>Ep ${i+1}: ${escapeHtml(ep.Title)}</option>`).join("");
   currentMedia.episode = parseInt(epSelect.value, 10);
 }
 
