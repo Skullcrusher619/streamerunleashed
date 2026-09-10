@@ -10,6 +10,7 @@
   --text: #E5E0F3;
   --text-muted: #a49db5;
   --error: #E57373;
+  --accent: #9d7fe6; 
 }
 
 * { box-sizing: border-box; scroll-behavior: smooth; }
@@ -26,14 +27,14 @@ body { margin: 0; font-family: "Inter", sans-serif; background: var(--bg-gradien
 /* Sidebar */
 .sidebar { width: 240px; background: rgba(var(--bg-dark-rgb), 0.8); backdrop-filter: blur(20px); border-right: 1px solid var(--glass-border); padding: 1.5rem; display: flex; flex-direction: column; position: fixed; height: 100vh; z-index: 500; transition: transform 0.3s ease; }
 .sidebar h2 { color: var(--primary); font-size: 1.2rem; margin-bottom: 2rem; }
-.sidebar .toggle { display: none; background: transparent; border: none; color: white; font-size: 1.5rem; cursor: pointer; position: absolute; top: 1rem; right: -3rem; z-index: 501; }
 .nav-links { display: flex; flex-direction: column; gap: 1rem; }
 .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 1rem; padding: 0.5rem; border-radius: 8px; transition: 0.2s; outline: none; }
 .nav-links a:hover, .nav-links a:focus { color: var(--text); background: rgba(255,255,255,0.05); }
 
 /* Main Layout */
 .main-wrapper { flex: 1; margin-left: 240px; display: flex; flex-direction: column; width: calc(100% - 240px); }
-.top-bar { position: fixed; top: 0; width: calc(100% - 240px); z-index: 100; background: linear-gradient(to bottom, rgba(var(--bg-dark-rgb),0.9), transparent); padding: 1.5rem 2rem; pointer-events: none; }
+.top-bar { position: fixed; top: 0; width: calc(100% - 240px); z-index: 100; background: linear-gradient(to bottom, rgba(var(--bg-dark-rgb),0.9), transparent); padding: 1.5rem 2rem; pointer-events: none; display: flex; justify-content: space-between; align-items: center; }
+.top-bar .toggle { display: none; background: transparent; border: none; color: white; font-size: 1.5rem; cursor: pointer; pointer-events: auto; }
 .search-container { position: relative; max-width: 400px; margin-left: auto; pointer-events: auto; display: flex; gap: 0.5rem; }
 .search-container input { width: 100%; padding: 0.6rem 1rem; border-radius: 20px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); color: var(--text); outline: none; transition: 0.3s; }
 .search-container input:focus { border-color: var(--primary); background: rgba(0,0,0,0.8); box-shadow: 0 0 10px rgba(var(--primary-rgb), 0.3); }
@@ -60,6 +61,7 @@ body { margin: 0; font-family: "Inter", sans-serif; background: var(--bg-gradien
 .hero-section { position: relative; width: 100%; min-height: 70vh; display: flex; align-items: flex-end; padding: 4rem 3rem; overflow: hidden; }
 .hero-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center; filter: blur(20px) brightness(0.4); transform: scale(1.1); z-index: 1; }
 .hero-section::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 60%; background: linear-gradient(to top, var(--bg-dark), transparent); z-index: 2; }
+.hero-section::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to right, rgba(10,7,16,0.95) 20%, rgba(10,7,16,0.6) 60%, transparent 100%); z-index: 2; }
 .hero-content { position: relative; z-index: 3; display: flex; align-items: flex-end; gap: 3rem; max-width: 1200px; }
 .hero-poster { width: 250px; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); display: none; } 
 .hero-text { flex: 1; }
@@ -77,9 +79,9 @@ body { margin: 0; font-family: "Inter", sans-serif; background: var(--bg-gradien
 .carousel-wrapper { position: relative; display: flex; align-items: center; }
 .carousel { display: flex; gap: 1rem; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding-bottom: 1rem; padding-top: 1rem; }
 .carousel::-webkit-scrollbar { display: none; }
-.scroll-btn { position: absolute; z-index: 10; background: rgba(0,0,0,0.6); color: white; border: none; font-size: 2rem; width: 40px; height: 100%; top: 0; cursor: pointer; transition: 0.2s; opacity: 0; display: flex; align-items: center; justify-content: center; }
+.scroll-btn { position: absolute; z-index: 10; background: rgba(0,0,0,0.6); color: white; border: none; font-size: 2rem; width: 40px; height: 100%; top: 0; cursor: pointer; transition: 0.2s; opacity: 0.4; display: flex; align-items: center; justify-content: center; }
 .carousel-wrapper:hover .scroll-btn { opacity: 1; }
-.scroll-btn:hover { background: rgba(0,0,0,0.9); }
+.scroll-btn:hover { background: rgba(0,0,0,0.9); opacity: 1; }
 .scroll-btn.left { left: -20px; }
 .scroll-btn.right { right: -20px; }
 
@@ -126,9 +128,9 @@ body { margin: 0; font-family: "Inter", sans-serif; background: var(--bg-gradien
 
 /* Player Overlay */
 .player-overlay { padding: 0; background: #000; backdrop-filter: none; }
-.player-wrapper { width: 100%; height: 100%; position: relative; }
-.video-container { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
-.video-container iframe { width: 100%; height: 100%; border: none; max-width: 1400px; }
+.player-wrapper { width: 100%; height: 100%; position: relative; display: flex; justify-content: center; align-items: center; }
+.video-container { aspect-ratio: 16 / 9; max-width: 1200px; width: 90vw; background: #000; display: flex; justify-content: center; align-items: center; border-radius: 12px; overflow: hidden; }
+.video-container iframe { width: 100%; height: 100%; border: none; }
 .player-overlay .close-btn { top: 2rem; right: 2rem; background: rgba(0,0,0,0.5); width: 48px; height: 48px; font-size: 1.5rem; }
 
 /* Responsive */
@@ -138,9 +140,10 @@ body { margin: 0; font-family: "Inter", sans-serif; background: var(--bg-gradien
 @media(max-width: 768px) {
   .sidebar { transform: translateX(-100%); }
   .sidebar.show { transform: translateX(0); }
-  .sidebar .toggle { display: block; }
+  .top-bar .toggle { display: block; }
   .main-wrapper { margin-left: 0; width: 100%; }
   .top-bar { width: 100%; padding: 1rem; }
+  .search-container { margin-left: auto; width: 100%; padding-left: 1rem; }
   .hero-section { padding: 6rem 1.5rem 2rem 1.5rem; min-height: 60vh; }
   .hero-text h1 { font-size: 2.5rem; }
   .content-row { padding: 0 1.5rem; }
@@ -148,4 +151,5 @@ body { margin: 0; font-family: "Inter", sans-serif; background: var(--bg-gradien
   .modal-poster { text-align: center; }
   .scroll-btn { display: none; }
   #tvSelector { flex-direction: column; align-items: stretch; }
+  .video-container { width: 100vw; border-radius: 0; }
 }

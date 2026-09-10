@@ -20,7 +20,7 @@ const modalDetailsBody = document.getElementById("modalDetailsBody");
 const playerModal = document.getElementById("playerModal");
 const playerContainer = document.getElementById("playerContainer");
 
-let currentMedia = { imdbID: "", title: "", poster: "", type: "", season: 1, episode: 1 };
+let currentMedia = { imdbID: "", title: "", poster: "", type: "", season: 1, episode: 1, tmdbId: null };
 let topUserGenre = "-"; 
 
 // TMDB Genre Mapping
@@ -61,7 +61,14 @@ const saveList = (key, val) => { localStorage.setItem(key, JSON.stringify(val));
 // Event Listeners
 document.getElementById("sidebarToggle").addEventListener("click", () => sidebar.classList.toggle("show"));
 searchBtn.addEventListener("click", executeSearch);
-searchInput.addEventListener("input", showAutocomplete);
+
+// Debounce for Autocomplete
+let timeoutId;
+searchInput.addEventListener("input", () => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(showAutocomplete, 300);
+});
+
 document.addEventListener("click", e => { if (!e.target.closest('.search-container')) autocompleteDiv.style.display = "none"; });
 document.getElementById("filterType").addEventListener("change", executeSearch);
 
@@ -145,11 +152,11 @@ async function renderTMDBDeck(tmdbResults) {
              const bridgeData = await fetchWithCache(`https://www.omdbapi.com/?t=${encodeURIComponent(title)}&y=${year}&apikey=${omdbKey}`);
              
              if(bridgeData.Response !== "False") {
-                 loadDetails(bridgeData.imdbID);
+                 loadDetails(bridgeData.imdbID, item.id);
              } else {
                  const looseBridge = await fetchWithCache(`https://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${omdbKey}`);
                  if(looseBridge.Response !== "False") {
-                     loadDetails(looseBridge.imdbID);
+                     loadDetails(looseBridge.imdbID, item.id);
                  } else {
                      modalDetailsBody.innerHTML = `<div style="text-align:center;width:100%;color:red;">Could not find streaming source for ${title}</div>`;
                  }
@@ -180,7 +187,7 @@ async function loadHero() {
   document.getElementById("heroPoster").src = posterUrl;
 
   document.getElementById("heroPlayBtn").onclick = () => {
-    currentMedia = { imdbID: data.imdbID, title: data.Title, poster: posterUrl, type: data.Type, season: 1, episode: 1 };
+    currentMedia = { imdbID: data.imdbID, title: data.Title, poster: posterUrl, type: data.Type, season: 1, episode: 1, tmdbId: null };
     openPlayer();
   };
   document.getElementById("heroMoreBtn").onclick = () => loadDetails(data.imdbID);
@@ -306,7 +313,7 @@ async function loadCarousels() {
 }
 
 // --- Details Modal ---
-async function loadDetails(imdbID) {
+async function loadDetails(imdbID, tmdbId = null) {
   modalDetailsBody.innerHTML = '<div style="text-align:center;width:100%;"><div class="skeleton-card" style="width:200px;margin:0 auto;"></div><p>Loading details...</p></div>';
   detailsModal.style.display = "flex";
   document.body.style.overflow = "hidden";
@@ -320,7 +327,6 @@ async function loadDetails(imdbID) {
   
   const posterUrl = data.Poster !== "N/A" ? data.Poster : "https://via.placeholder.com/300x450";
   
-  // Check if we have saved progress for this media
   const continueList = getList("continue_watching");
   const savedProgress = continueList.find(item => item.imdbID === imdbID);
   
@@ -330,7 +336,8 @@ async function loadDetails(imdbID) {
     poster: posterUrl,
     type: data.Type, 
     season: savedProgress ? savedProgress.season : 1, 
-    episode: savedProgress ? savedProgress.episode : 1 
+    episode: savedProgress ? savedProgress.episode : 1,
+    tmdbId: tmdbId 
   };
 
   const favs = getList("favorites");
@@ -420,21 +427,51 @@ window.updateEpisode = val => {
 };
 
 // --- Player Logic ---
-function openPlayer() {
-  detailsModal.style.display = "none"; 
+async function openPlayer() {
+  detailsModal.style.display = "none";
   playerModal.style.display = "flex";
   document.body.style.overflow = "hidden";
-  
-  // vidsrc.sbs dynamic embed paths
-  const src = currentMedia.type === "series" 
-    ? `https://vidsrc.sbs/embed/tv/${currentMedia.imdbID}/${currentMedia.season}/${currentMedia.episode}`
-    : `https://vidsrc.sbs/embed/movie/${currentMedia.imdbID}`;
-    
-  playerContainer.innerHTML = `<iframe src="${src}" frameborder="0" allowfullscreen allow="autoplay; encrypted-media" referrerpolicy="origin"></iframe>`;
+  playerContainer.innerHTML = `<div style="color:#fff;display:flex;align-items:center;justify-content:center;height:100%;">Loading player...</div>`;
 
-  // Track into continue watching
+  let tmdbId = currentMedia.tmdbId;
+
+  if (!tmdbId && currentMedia.imdbID) {
+    try {
+      const findRes = await fetchWithCache(
+        `https://api.themoviedb.org/3/find/${currentMedia.imdbID}?api_key=${tmdbKey}&external_source=imdb_id`,
+        `tmdb_find_${currentMedia.imdbID}`
+      );
+      const results = currentMedia.type === "series" ? findRes.tv_results : findRes.movie_results;
+      if (results && results.length > 0) {
+        tmdbId = results[0].id;
+        currentMedia.tmdbId = tmdbId;
+      }
+    } catch (e) {
+      console.error("Failed to map IMDb to TMDB:", e);
+    }
+  }
+
+  const identifier = tmdbId || currentMedia.imdbID;
+
+  const src = currentMedia.type === "series"
+    ? `https://vidsrcme.ru/embed/tv/${identifier}/${currentMedia.season}/${currentMedia.episode}`
+    : `https://vidsrcme.ru/embed/movie/${identifier}`;
+
+  playerContainer.innerHTML = `
+    <iframe
+      src="${src}"
+      width="100%"
+      height="100%"
+      frameborder="0"
+      allowfullscreen
+      allow="autoplay; encrypted-media; fullscreen"
+      referrerpolicy="origin">
+    </iframe>
+  `;
+
   saveProgress(currentMedia);
 }
+
 
 function closePlayer() {
   playerModal.style.display = "none";
