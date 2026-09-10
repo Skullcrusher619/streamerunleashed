@@ -19,6 +19,7 @@ const detailsModal = document.getElementById("detailsModal");
 const modalDetailsBody = document.getElementById("modalDetailsBody");
 const playerModal = document.getElementById("playerModal");
 const playerContainer = document.getElementById("playerContainer");
+const toastContainer = document.getElementById("toastContainer");
 
 let currentMedia = { imdbID: "", title: "", poster: "", type: "", season: 1, episode: 1, tmdbId: null };
 let topUserGenre = "-"; 
@@ -58,11 +59,29 @@ async function fetchWithCache(url, idKey = null) {
 const getList = key => JSON.parse(localStorage.getItem(key) || "[]");
 const saveList = (key, val) => { localStorage.setItem(key, JSON.stringify(val)); renderAnalytics(); };
 
+// Feedback Utilities
+function showToast(message) {
+  const toast = document.createElement("div");
+  toast.className = "toast-msg";
+  toast.textContent = message;
+  toastContainer.appendChild(toast);
+  setTimeout(() => { if (toast.parentNode) toast.remove(); }, 3000);
+}
+
+function getEmptyState(icon, text, btnText, fnName) {
+  return `
+    <div class="empty-state">
+      <div class="empty-icon">${icon}</div>
+      <p>${text}</p>
+      <button class="btn secondary-btn" onclick="${fnName}()">${btnText}</button>
+    </div>
+  `;
+}
+
 // Event Listeners
 document.getElementById("sidebarToggle").addEventListener("click", () => sidebar.classList.toggle("show"));
 searchBtn.addEventListener("click", executeSearch);
 
-// Debounce for Autocomplete
 let timeoutId;
 searchInput.addEventListener("input", () => {
     clearTimeout(timeoutId);
@@ -81,7 +100,6 @@ window.addEventListener("DOMContentLoaded", async () => {
   loadRecommendations();
 });
 
-// --- Interactive TMDB Recommendation Engine ---
 function setupGenreDropdown() {
     let options = `<option value="trending">Trending Now</option>`;
     const sortedGenres = Object.keys(tmdbGenreMap).sort();
@@ -90,17 +108,12 @@ function setupGenreDropdown() {
     });
     
     genreSelect.innerHTML = options;
-    genreSelect.addEventListener("change", (e) => {
-        loadRecommendations(e.target.value);
-    });
+    genreSelect.addEventListener("change", (e) => loadRecommendations(e.target.value));
 }
 
 async function loadRecommendations(forcedGenre = null) {
   let targetGenre = forcedGenre || topUserGenre;
-  
-  if ((targetGenre === "-" || targetGenre === "N/A") && !forcedGenre) {
-      targetGenre = "trending";
-  }
+  if ((targetGenre === "-" || targetGenre === "N/A") && !forcedGenre) targetGenre = "trending";
 
   genreSelect.value = targetGenre;
   showSkeletons(recommendedCarousel, 10);
@@ -114,14 +127,13 @@ async function loadRecommendations(forcedGenre = null) {
         const res = await fetch(`https://api.themoviedb.org/3/discover/movie?api_key=${tmdbKey}&with_genres=${genreId}&sort_by=popularity.desc`).then(r => r.json());
         renderTMDBDeck(res.results);
       } else {
-        recommendedCarousel.innerHTML = "<p style='padding:1rem;'>Select a genre above to see recommendations.</p>";
+        recommendedCarousel.innerHTML = "<p style='padding:1rem;'>Select a genre above.</p>";
       }
   }
 }
 
 async function renderTMDBDeck(tmdbResults) {
     if(!tmdbResults || tmdbResults.length === 0) return;
-    
     recommendedCarousel.innerHTML = "";
     
     for (const item of tmdbResults.slice(0, 15)) {
@@ -134,16 +146,13 @@ async function renderTMDBDeck(tmdbResults) {
         const card = document.createElement("div");
         card.className = "result-card tmdb-card";
         card.tabIndex = 0;
-        card.dataset.tmdbtitle = title; 
-        
         card.innerHTML = `
         <img src="${posterUrl}" loading="lazy" alt="${title}">
         <div class="card-overlay">
             <div class="play-icon">▶</div>
             <h4>${title}</h4>
             <p>${year}</p>
-        </div>
-        `;
+        </div>`;
         
         card.onclick = async () => {
              modalDetailsBody.innerHTML = '<div style="text-align:center;width:100%;"><p>Bridging databases...</p></div>';
@@ -155,18 +164,14 @@ async function renderTMDBDeck(tmdbResults) {
                  loadDetails(bridgeData.imdbID, item.id);
              } else {
                  const looseBridge = await fetchWithCache(`https://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${omdbKey}`);
-                 if(looseBridge.Response !== "False") {
-                     loadDetails(looseBridge.imdbID, item.id);
-                 } else {
-                     modalDetailsBody.innerHTML = `<div style="text-align:center;width:100%;color:red;">Could not find streaming source for ${title}</div>`;
-                 }
+                 if(looseBridge.Response !== "False") loadDetails(looseBridge.imdbID, item.id);
+                 else modalDetailsBody.innerHTML = `<div style="text-align:center;width:100%;color:red;">Could not find streaming source for ${title}</div>`;
              }
         };
         recommendedCarousel.appendChild(card);
     }
 }
 
-// --- Hero Billboard ---
 async function loadHero() {
   const favs = getList("favorites");
   const recents = getList("recent");
@@ -193,13 +198,12 @@ async function loadHero() {
   document.getElementById("heroMoreBtn").onclick = () => loadDetails(data.imdbID);
 }
 
-// --- Navigation & UX ---
 function scrollToSection(id) {
   sidebar.classList.remove("show");
   document.getElementById(id).scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-function focusSearch() {
+window.focusSearch = function() {
   sidebar.classList.remove("show");
   window.scrollTo({ top: 0, behavior: "smooth" });
   setTimeout(() => searchInput.focus(), 300);
@@ -215,7 +219,6 @@ function showSkeletons(container, count = 8) {
   container.innerHTML = Array(count).fill('<div class="skeleton-card" tabindex="0"></div>').join("");
 }
 
-// --- Search ---
 async function showAutocomplete() {
   const query = searchInput.value.trim();
   if (query.length < 2) { autocompleteDiv.style.display = "none"; return; }
@@ -249,7 +252,7 @@ async function executeSearch() {
 
   try {
     const data = await fetchWithCache(`https://www.omdbapi.com/?s=${encodeURIComponent(query)}&apikey=${omdbKey}`);
-    if (data.Response === "False") throw new Error("No results found");
+    if (data.Response === "False") throw new Error("No results found.");
     
     let items = data.Search;
     const typeFilter = document.getElementById("filterType").value;
@@ -257,11 +260,10 @@ async function executeSearch() {
 
     renderCarouselCards(searchCarousel, items);
   } catch (err) { 
-    searchCarousel.innerHTML = `<div style="padding:2rem;">${err.message}</div>`; 
+    searchCarousel.innerHTML = getEmptyState("🔍", err.message, "Clear Search", "focusSearch"); 
   }
 }
 
-// --- Carousels ---
 function renderCarouselCards(container, items) {
   container.innerHTML = "";
   items.forEach((item) => {
@@ -293,26 +295,22 @@ async function loadCarousels() {
   
   if (continueList.length > 0) {
     renderCarouselCards(continueCarousel, continueList.map(c => ({
-      imdbID: c.imdbID,
-      title: c.title,
-      poster: c.poster,
-      subtitle: c.type === "series" ? `S${c.season} E${c.episode}` : "Movie"
+      imdbID: c.imdbID, title: c.title, poster: c.poster, subtitle: c.type === "series" ? `S${c.season} E${c.episode}` : "Movie"
     })));
   } else {
-    continueCarousel.innerHTML = "<p style='padding:1rem;color:#666;'>No active titles to continue.</p>";
+    continueCarousel.innerHTML = getEmptyState("🍿", "Nothing in progress right now.", "Explore", "focusSearch");
   }
 
   if(favs.length > 0) renderCarouselCards(favoritesCarousel, favs.map(f => ({imdbID: f.imdbID, Title: f.title, Poster: f.poster, Year: ""})));
-  else favoritesCarousel.innerHTML = "<p style='padding:1rem;color:#666;'>No favorites yet.</p>";
+  else favoritesCarousel.innerHTML = getEmptyState("💔", "No favorites yet.", "Find Movies", "focusSearch");
 
   if(recents.length > 0) {
     showSkeletons(recentCarousel, recents.length);
     const recentData = await Promise.all(recents.map(id => fetchWithCache(`https://www.omdbapi.com/?i=${id}&apikey=${omdbKey}`, id)));
     renderCarouselCards(recentCarousel, recentData.filter(d => d.Response !== "False"));
-  } else recentCarousel.innerHTML = "<p style='padding:1rem;color:#666;'>No watch history.</p>";
+  } else recentCarousel.innerHTML = getEmptyState("🕒", "Your watch history is empty.", "Start Watching", "focusSearch");
 }
 
-// --- Details Modal ---
 async function loadDetails(imdbID, tmdbId = null) {
   modalDetailsBody.innerHTML = '<div style="text-align:center;width:100%;"><div class="skeleton-card" style="width:200px;margin:0 auto;"></div><p>Loading details...</p></div>';
   detailsModal.style.display = "flex";
@@ -326,18 +324,12 @@ async function loadDetails(imdbID, tmdbId = null) {
   }
   
   const posterUrl = data.Poster !== "N/A" ? data.Poster : "https://via.placeholder.com/300x450";
-  
   const continueList = getList("continue_watching");
   const savedProgress = continueList.find(item => item.imdbID === imdbID);
   
   currentMedia = { 
-    imdbID: imdbID, 
-    title: data.Title,
-    poster: posterUrl,
-    type: data.Type, 
-    season: savedProgress ? savedProgress.season : 1, 
-    episode: savedProgress ? savedProgress.episode : 1,
-    tmdbId: tmdbId 
+    imdbID: imdbID, title: data.Title, poster: posterUrl, type: data.Type, 
+    season: savedProgress ? savedProgress.season : 1, episode: savedProgress ? savedProgress.episode : 1, tmdbId: tmdbId 
   };
 
   const favs = getList("favorites");
@@ -346,10 +338,7 @@ async function loadDetails(imdbID, tmdbId = null) {
   let tvControls = "";
   if (data.Type === "series") {
     const totalSeasons = parseInt(data.totalSeasons, 10) || 1;
-    let seasonOpts = Array.from({length: totalSeasons}, (_, i) => {
-      const sNum = i + 1;
-      return `<option value="${sNum}" ${sNum === Number(currentMedia.season) ? 'selected' : ''}>Season ${sNum}</option>`;
-    }).join("");
+    let seasonOpts = Array.from({length: totalSeasons}, (_, i) => `<option value="${i+1}" ${i+1 === Number(currentMedia.season) ? 'selected' : ''}>Season ${i+1}</option>`).join("");
 
     tvControls = `
       <div id="tvSelector">
@@ -367,9 +356,7 @@ async function loadDetails(imdbID, tmdbId = null) {
 
   modalDetailsBody.innerHTML = `
     <div class="modal-details-layout">
-      <div class="modal-poster">
-        <img src="${posterUrl}" alt="${data.Title}">
-      </div>
+      <div class="modal-poster"><img src="${posterUrl}" alt="${data.Title}"></div>
       <div class="modal-info">
         <h2>${data.Title}</h2>
         <div class="modal-meta">
@@ -378,9 +365,7 @@ async function loadDetails(imdbID, tmdbId = null) {
         <p><strong>Genre:</strong> ${data.Genre}</p>
         <p><strong>Cast:</strong> ${data.Actors}</p>
         <p style="margin-top:1rem; line-height:1.6;">${data.Plot}</p>
-        
         ${tvControls}
-
         <div class="modal-actions">
           <button class="btn primary-btn" onclick="openPlayer()">▶ Play</button>
           <button class="btn secondary-btn" onclick="toggleFavModal('${data.Title.replace(/'/g, "\\'")}', '${posterUrl}', '${imdbID}')" id="favBtnModal">
@@ -414,19 +399,12 @@ async function fetchEpisodes(season, targetEpisode = 1) {
     return; 
   }
   
-  epSelect.innerHTML = data.Episodes.map((ep, i) => {
-    const epNum = i + 1;
-    return `<option value="${epNum}" ${epNum === Number(targetEpisode) ? 'selected' : ''}>Ep ${epNum}: ${ep.Title}</option>`;
-  }).join("");
-
+  epSelect.innerHTML = data.Episodes.map((ep, i) => `<option value="${i+1}" ${i+1 === Number(targetEpisode) ? 'selected' : ''}>Ep ${i+1}: ${ep.Title}</option>`).join("");
   currentMedia.episode = parseInt(epSelect.value, 10);
 }
 
-window.updateEpisode = val => {
-  currentMedia.episode = parseInt(val, 10);
-};
+window.updateEpisode = val => { currentMedia.episode = parseInt(val, 10); };
 
-// --- Player Logic ---
 async function openPlayer() {
   detailsModal.style.display = "none";
   playerModal.style.display = "flex";
@@ -437,41 +415,20 @@ async function openPlayer() {
 
   if (!tmdbId && currentMedia.imdbID) {
     try {
-      const findRes = await fetchWithCache(
-        `https://api.themoviedb.org/3/find/${currentMedia.imdbID}?api_key=${tmdbKey}&external_source=imdb_id`,
-        `tmdb_find_${currentMedia.imdbID}`
-      );
+      const findRes = await fetchWithCache(`https://api.themoviedb.org/3/find/${currentMedia.imdbID}?api_key=${tmdbKey}&external_source=imdb_id`, `tmdb_find_${currentMedia.imdbID}`);
       const results = currentMedia.type === "series" ? findRes.tv_results : findRes.movie_results;
-      if (results && results.length > 0) {
-        tmdbId = results[0].id;
-        currentMedia.tmdbId = tmdbId;
-      }
-    } catch (e) {
-      console.error("Failed to map IMDb to TMDB:", e);
-    }
+      if (results && results.length > 0) { tmdbId = results[0].id; currentMedia.tmdbId = tmdbId; }
+    } catch (e) { console.error(e); }
   }
 
   const identifier = tmdbId || currentMedia.imdbID;
-
   const src = currentMedia.type === "series"
     ? `https://vidsrcme.ru/embed/tv/${identifier}/${currentMedia.season}/${currentMedia.episode}`
     : `https://vidsrcme.ru/embed/movie/${identifier}`;
 
-  playerContainer.innerHTML = `
-    <iframe
-      src="${src}"
-      width="100%"
-      height="100%"
-      frameborder="0"
-      allowfullscreen
-      allow="autoplay; encrypted-media; fullscreen"
-      referrerpolicy="origin">
-    </iframe>
-  `;
-
+  playerContainer.innerHTML = `<iframe src="${src}" width="100%" height="100%" frameborder="0" allowfullscreen allow="autoplay; encrypted-media; fullscreen" referrerpolicy="origin"></iframe>`;
   saveProgress(currentMedia);
 }
-
 
 function closePlayer() {
   playerModal.style.display = "none";
@@ -484,13 +441,7 @@ function saveProgress(media) {
   let continueList = getList("continue_watching");
   continueList = continueList.filter(item => item.imdbID !== media.imdbID);
   continueList.unshift({
-    imdbID: media.imdbID,
-    title: media.title,
-    poster: media.poster,
-    type: media.type,
-    season: media.season,
-    episode: media.episode,
-    timestamp: Date.now()
+    imdbID: media.imdbID, title: media.title, poster: media.poster, type: media.type, season: media.season, episode: media.episode, timestamp: Date.now()
   });
   if (continueList.length > 20) continueList.pop();
   saveList("continue_watching", continueList);
@@ -503,9 +454,11 @@ window.toggleFavModal = (title, poster, imdbID) => {
   if(index > -1) {
     favs.splice(index, 1);
     btn.innerHTML = "♡ Add to Favorites";
+    showToast(`Removed ${title} from Favorites`);
   } else {
     favs.unshift({title, poster, imdbID});
     btn.innerHTML = "♥ Remove Favorite";
+    showToast(`Added ${title} to Favorites`);
   }
   saveList("favorites", favs);
   loadCarousels(); 
@@ -520,64 +473,7 @@ function addHistory(imdbID) {
   }
 }
 
-// --- Spatial Keyboard Navigation ---
-document.addEventListener("keydown", (e) => {
-  if (e.key === "/") { 
-    if(document.activeElement !== searchInput) {
-        e.preventDefault(); 
-        focusSearch(); 
-    }
-    return;
-  }
-  if (e.key === "Escape") {
-    if (playerModal.style.display === "flex") closePlayer();
-    else if (detailsModal.style.display === "flex") closeModal("detailsModal");
-    else if (autocompleteDiv.style.display === "block") autocompleteDiv.style.display = "none";
-    return;
-  }
-  if (e.key === "Enter") {
-    if (document.activeElement === searchInput) { executeSearch(); return; }
-    if (document.activeElement.classList.contains("result-card")) {
-      document.activeElement.click();
-      return;
-    }
-  }
-
-  if (["ArrowRight", "ArrowLeft", "ArrowUp", "ArrowDown"].includes(e.key)) {
-    const active = document.activeElement;
-    if (!active.classList.contains("result-card")) return; 
-    
-    e.preventDefault(); 
-    const currentRow = active.closest(".carousel");
-    const cards = Array.from(currentRow.querySelectorAll(".result-card"));
-    const currentIndex = cards.indexOf(active);
-
-    if (e.key === "ArrowRight" && currentIndex < cards.length - 1) {
-      cards[currentIndex + 1].focus();
-      cards[currentIndex + 1].scrollIntoView({behavior: "smooth", block: "nearest", inline: "center"});
-    } else if (e.key === "ArrowLeft" && currentIndex > 0) {
-      cards[currentIndex - 1].focus();
-      cards[currentIndex - 1].scrollIntoView({behavior: "smooth", block: "nearest", inline: "center"});
-    } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-      const allRows = Array.from(document.querySelectorAll(".carousel"));
-      const rowIndex = allRows.indexOf(currentRow);
-      let targetRow = null;
-      if (e.key === "ArrowDown" && rowIndex < allRows.length - 1) targetRow = allRows[rowIndex + 1];
-      if (e.key === "ArrowUp" && rowIndex > 0) targetRow = allRows[rowIndex - 1];
-      
-      if (targetRow) {
-        const targetCards = targetRow.querySelectorAll(".result-card");
-        if (targetCards.length > 0) {
-          const nextTarget = targetCards[Math.min(currentIndex, targetCards.length - 1)];
-          nextTarget.focus();
-          targetRow.closest('.content-row').scrollIntoView({behavior: "smooth", block: "center"});
-        }
-      }
-    }
-  }
-});
-
-// --- Analytics Dashboard Processing ---
+// Spatial Keyboard Navigation & Analytics remain unmodified.
 function renderAnalytics() {
   const recents = getList("recent");
   const favs = getList("favorites");
