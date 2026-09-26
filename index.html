@@ -10,58 +10,78 @@
 </head>
 <body>
 <!-- Sidebar Navigation -->
-<nav class="sidebar" id="sidebar">
+<nav class="sidebar" id="sidebar" aria-label="Main">
   <div class="brand">Personal<em>Streamer</em></div>
   <div class="nav-links">
-    <a href="#" onclick="scrollToSection('hero')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9a1 1 0 0 0 1 1H9a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h2.5a1 1 0 0 0 1-1v-9"/></svg><span>Home</span></a>
-    <a href="#" onclick="focusSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.8-4.8"/></svg><span>Search</span></a>
-    <a href="#" onclick="scrollToSection('continueSection')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M10 9v6l5-3z" fill="currentColor" stroke="none"/></svg><span>Continue Watching</span></a>
-    <a href="#" onclick="scrollToSection('recommendedSection')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5c.6 2.7 1.6 4.4 3.3 5.8 1.7 1.4 3.4 1.9 5.2 2.2-1.8.3-3.5.8-5.2 2.2-1.7 1.4-2.7 3.1-3.3 5.8-.6-2.7-1.6-4.4-3.3-5.8C7 12.3 5.3 11.8 3.5 11.5c1.8-.3 3.5-.8 5.2-2.2C10.4 7.9 11.4 6.2 12 3.5Z"/></svg><span>For You</span></a>
-    <a href="#" onclick="scrollToSection('favoritesSection')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5.5c-1.3-2-3.4-2.7-5.2-1.9-1.9.8-3 2.9-2.6 5C4.7 12 8.4 15 12 18c3.6-3 7.3-6 7.8-9.4.4-2.1-.7-4.2-2.6-5-1.8-.8-3.9-.1-5.2 1.9Z"/></svg><span>Favorites</span></a>
-    <a href="#" onclick="scrollToSection('recentSection')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12.5" r="8"/><path d="M12 8v4.5l3 2"/><path d="M9 2.5h6"/></svg><span>Watch History</span></a>
-    <a href="#" onclick="scrollToSection('analyticsSection')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10.5M12 20V4M20 20v-7"/><path d="M2.5 20h19"/></svg><span>Analytics</span></a>
+    <a href="#hero" data-scroll="hero"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9a1 1 0 0 0 1 1H9a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h2.5a1 1 0 0 0 1-1v-9"/></svg><span>Home</span></a>
+    <a href="#titleInput" data-action="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.8-4.8"/></svg><span>Search</span></a>
+    <button type="button" data-action="surprise"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3.5"/><circle cx="8.6" cy="8.6" r="1.1" fill="currentColor" stroke="none"/><circle cx="15.4" cy="8.6" r="1.1" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/><circle cx="8.6" cy="15.4" r="1.1" fill="currentColor" stroke="none"/><circle cx="15.4" cy="15.4" r="1.1" fill="currentColor" stroke="none"/></svg><span>Surprise Me</span></button>
+    <a href="#continueSection" data-scroll="continueSection"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M10 9v6l5-3z" fill="currentColor" stroke="none"/></svg><span>Continue Watching</span></a>
+    <a href="#recommendedSection" data-scroll="recommendedSection"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5c.6 2.7 1.6 4.4 3.3 5.8 1.7 1.4 3.4 1.9 5.2 2.2-1.8.3-3.5.8-5.2 2.2-1.7 1.4-2.7 3.1-3.3 5.8-.6-2.7-1.6-4.4-3.3-5.8C7 12.3 5.3 11.8 3.5 11.5c1.8-.3 3.5-.8 5.2-2.2C10.4 7.9 11.4 6.2 12 3.5Z"/></svg><span>For You</span></a>
+    <a href="#favoritesSection" data-scroll="favoritesSection"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5.5c-1.3-2-3.4-2.7-5.2-1.9-1.9.8-3 2.9-2.6 5C4.7 12 8.4 15 12 18c3.6-3 7.3-6 7.8-9.4.4-2.1-.7-4.2-2.6-5-1.8-.8-3.9-.1-5.2 1.9Z"/></svg><span>Favorites</span></a>
+    <a href="#recentSection" data-scroll="recentSection"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12.5" r="8"/><path d="M12 8v4.5l3 2"/><path d="M9 2.5h6"/></svg><span>Watch History</span></a>
+    <a href="#analyticsSection" data-scroll="analyticsSection"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10.5M12 20V4M20 20v-7"/><path d="M2.5 20h19"/></svg><span>Analytics</span></a>
   </div>
 </nav>
 
-<div class="main-wrapper">
+<div class="main-wrapper" id="mainWrapper">
   <!-- Top Bar with Search -->
   <header class="top-bar">
-    <button class="toggle" id="sidebarToggle">☰</button>
-    <div class="search-container">
-      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.8-4.8"/></svg>
-      <input type="text" id="titleInput" placeholder="Search movies, series..." autocomplete="off">
-      <button id="searchBtn">Search</button>
-      <div id="autocomplete"></div>
+    <button class="toggle" id="sidebarToggle" type="button" aria-label="Open menu" aria-controls="sidebar" aria-expanded="false">☰</button>
+    <div class="top-actions">
+      <button type="button" class="surprise-btn" id="surpriseBtn" data-action="surprise" title="Pick something for me">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3.5"/><circle cx="8.6" cy="8.6" r="1.1" fill="currentColor" stroke="none"/><circle cx="15.4" cy="8.6" r="1.1" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/><circle cx="8.6" cy="15.4" r="1.1" fill="currentColor" stroke="none"/><circle cx="15.4" cy="15.4" r="1.1" fill="currentColor" stroke="none"/></svg>
+        <span class="surprise-label">Surprise me</span>
+      </button>
+      <div class="search-container" id="searchContainer">
+        <div class="search-field">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.8-4.8"/></svg>
+          <input type="text" id="titleInput" placeholder="Search movies, series..." autocomplete="off"
+                 role="combobox" aria-label="Search movies and series" aria-autocomplete="list"
+                 aria-expanded="false" aria-controls="autocomplete">
+          <kbd class="search-kbd" aria-hidden="true">/</kbd>
+          <button type="button" id="searchClear" class="search-clear" aria-label="Clear search" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17"/></svg>
+          </button>
+        </div>
+        <button id="searchBtn" type="button">Search</button>
+        <div id="autocomplete" role="listbox" aria-label="Search suggestions"></div>
+      </div>
     </div>
   </header>
 
   <main class="main-content">
     
     <!-- Hero Billboard -->
-    <section class="hero-section" id="hero">
+    <section class="hero-section" id="hero" tabindex="-1" aria-label="Featured">
       <div class="hero-bg" id="heroBg"></div>
-      <div class="hero-content">
+      <div class="hero-content" id="heroContent">
         <div class="hero-text">
           <h1 id="heroTitle">Loading...</h1>
           <div class="hero-meta" id="heroMeta"></div>
           <p id="heroPlot" class="hero-plot"></p>
           <div class="hero-actions">
-            <button id="heroPlayBtn" class="btn primary-btn">▶ Play</button>
-            <button id="heroMoreBtn" class="btn secondary-btn">ℹ More Info</button>
+            <button id="heroPlayBtn" type="button" class="btn primary-btn">▶ Play</button>
+            <button id="heroMoreBtn" type="button" class="btn secondary-btn">ℹ More Info</button>
+            <button id="heroShuffleBtn" type="button" class="btn ghost-btn" title="Feature a different title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h3.5c2 0 3.2.9 4.3 2.6l2.4 4.8c1.1 1.7 2.3 2.6 4.3 2.6H21"/><path d="M3 17h3.5c1.4 0 2.4-.5 3.2-1.3M14.3 8.3c.8-.8 1.8-1.3 3.2-1.3H21"/><path d="m18.5 4.5 2.5 2.5-2.5 2.5M18.5 14.5l2.5 2.5-2.5 2.5"/></svg>
+              <span>Shuffle</span>
+            </button>
           </div>
         </div>
         <img id="heroPoster" src="" alt="" class="hero-poster">
       </div>
+      <p class="sr-only" id="heroAnnounce" aria-live="polite"></p>
     </section>
 
     <!-- Content Rows (Carousels) -->
     <div class="rows-container">
       
-      <section class="content-row" id="searchSection" style="display: none;" data-row-index="0">
+      <section class="content-row" id="searchSection" style="display: none;" tabindex="-1" data-row-index="0">
         <div class="row-header">
-          <h2>Search Results</h2>
+          <h2 id="searchHeading">Search Results</h2>
           <div class="filters">
-            <select id="filterType" class="custom-select">
+            <select id="filterType" class="custom-select" aria-label="Filter by type">
               <option value="all">All</option>
               <option value="movie">Movies</option>
               <option value="series">Series</option>
@@ -69,59 +89,59 @@
           </div>
         </div>
         <div class="carousel-wrapper">
-          <button class="scroll-btn left" onclick="scrollCarousel('searchCarousel', -1)">‹</button>
-          <div class="carousel" id="searchCarousel"></div>
-          <button class="scroll-btn right" onclick="scrollCarousel('searchCarousel', 1)">›</button>
+          <button type="button" class="scroll-btn left" data-carousel="searchCarousel" data-dir="-1" aria-label="Scroll search results left">‹</button>
+          <div class="carousel" id="searchCarousel" aria-labelledby="searchHeading"></div>
+          <button type="button" class="scroll-btn right" data-carousel="searchCarousel" data-dir="1" aria-label="Scroll search results right">›</button>
         </div>
       </section>
 
-      <section class="content-row" id="continueSection" data-row-index="1">
-        <h2>Continue Watching</h2>
+      <section class="content-row" id="continueSection" tabindex="-1" data-row-index="1">
+        <h2 id="continueHeading">Continue Watching</h2>
         <div class="carousel-wrapper">
-          <button class="scroll-btn left" onclick="scrollCarousel('continueCarousel', -1)">‹</button>
-          <div class="carousel" id="continueCarousel"></div>
-          <button class="scroll-btn right" onclick="scrollCarousel('continueCarousel', 1)">›</button>
+          <button type="button" class="scroll-btn left" data-carousel="continueCarousel" data-dir="-1" aria-label="Scroll Continue Watching left">‹</button>
+          <div class="carousel" id="continueCarousel" aria-labelledby="continueHeading"></div>
+          <button type="button" class="scroll-btn right" data-carousel="continueCarousel" data-dir="1" aria-label="Scroll Continue Watching right">›</button>
         </div>
       </section>
 
       <!-- Interactive Recommended Section -->
-      <section class="content-row" id="recommendedSection" data-row-index="2">
+      <section class="content-row" id="recommendedSection" tabindex="-1" data-row-index="2">
         <div class="row-header" style="display: flex; flex-wrap: wrap; align-items: center; gap: 1rem;">
           <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-              <h2 style="margin:0;">Because you like</h2>
-              <select id="genreSelect" class="custom-select" style="font-size: 1.2rem; padding: 0.2rem 2.5rem 0.2rem 1rem; color: var(--text); border-color: transparent; background-color: rgba(255,255,255,0.1); font-weight: bold; margin: 0; box-shadow: none;">
+              <h2 style="margin:0;" id="recommendedHeading">Because you like</h2>
+              <select id="genreSelect" class="custom-select" aria-label="Genre" style="font-size: 1.2rem; padding: 0.2rem 2.5rem 0.2rem 1rem; color: var(--text); border-color: transparent; background-color: rgba(255,255,255,0.1); font-weight: bold; margin: 0; box-shadow: none;">
                   <!-- Populated by JS -->
               </select>
           </div>
-          <span style="font-size: 0.8rem; color: var(--accent); background: rgba(255,255,255,0.1); padding: 0.2rem 0.6rem; border-radius: 12px; margin-left: auto;">Powered by TMDB</span>
+          <span style="font-size: 0.8rem; color: var(--accent); background: rgba(255,255,255,0.1); padding: 0.2rem 0.6rem; border-radius: 12px; margin-left: auto;">Movies &amp; series · Powered by TMDB</span>
         </div>
         <div class="carousel-wrapper">
-          <button class="scroll-btn left" onclick="scrollCarousel('recommendedCarousel', -1)">‹</button>
-          <div class="carousel" id="recommendedCarousel"></div>
-          <button class="scroll-btn right" onclick="scrollCarousel('recommendedCarousel', 1)">›</button>
-        </div>
-      </section>
-
-      <section class="content-row" id="favoritesSection" data-row-index="3">
-        <h2>Your Favorites</h2>
-        <div class="carousel-wrapper">
-          <button class="scroll-btn left" onclick="scrollCarousel('favoritesCarousel', -1)">‹</button>
-          <div class="carousel" id="favoritesCarousel"></div>
-          <button class="scroll-btn right" onclick="scrollCarousel('favoritesCarousel', 1)">›</button>
+          <button type="button" class="scroll-btn left" data-carousel="recommendedCarousel" data-dir="-1" aria-label="Scroll recommendations left">‹</button>
+          <div class="carousel" id="recommendedCarousel" aria-labelledby="recommendedHeading"></div>
+          <button type="button" class="scroll-btn right" data-carousel="recommendedCarousel" data-dir="1" aria-label="Scroll recommendations right">›</button>
         </div>
       </section>
 
-      <section class="content-row" id="recentSection" data-row-index="4">
-        <h2>Watch History</h2>
+      <section class="content-row" id="favoritesSection" tabindex="-1" data-row-index="3">
+        <h2 id="favoritesHeading">Your Favorites</h2>
         <div class="carousel-wrapper">
-          <button class="scroll-btn left" onclick="scrollCarousel('recentCarousel', -1)">‹</button>
-          <div class="carousel" id="recentCarousel"></div>
-          <button class="scroll-btn right" onclick="scrollCarousel('recentCarousel', 1)">›</button>
+          <button type="button" class="scroll-btn left" data-carousel="favoritesCarousel" data-dir="-1" aria-label="Scroll favorites left">‹</button>
+          <div class="carousel" id="favoritesCarousel" aria-labelledby="favoritesHeading"></div>
+          <button type="button" class="scroll-btn right" data-carousel="favoritesCarousel" data-dir="1" aria-label="Scroll favorites right">›</button>
+        </div>
+      </section>
+
+      <section class="content-row" id="recentSection" tabindex="-1" data-row-index="4">
+        <h2 id="recentHeading">Watch History</h2>
+        <div class="carousel-wrapper">
+          <button type="button" class="scroll-btn left" data-carousel="recentCarousel" data-dir="-1" aria-label="Scroll watch history left">‹</button>
+          <div class="carousel" id="recentCarousel" aria-labelledby="recentHeading"></div>
+          <button type="button" class="scroll-btn right" data-carousel="recentCarousel" data-dir="1" aria-label="Scroll watch history right">›</button>
         </div>
       </section>
       
       <!-- Analytics Dashboard -->
-      <section class="content-row" id="analyticsSection">
+      <section class="content-row" id="analyticsSection" tabindex="-1">
         <h2>Viewing Analytics</h2>
         <div class="analytics-grid">
           <div class="stat-card glass-panel">
@@ -140,6 +160,24 @@
             <div class="stat-label">Of favorites</div>
           </div>
         </div>
+
+        <div class="data-panel glass-panel">
+          <div class="data-panel-text">
+            <h3>Your data</h3>
+            <p>Favorites, watch history and progress are saved only in this browser. Export a backup to keep them safe or move them to another browser.</p>
+          </div>
+          <div class="data-panel-actions">
+            <button type="button" id="exportDataBtn" class="btn secondary-btn btn-sm">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5"/><path d="M4.5 16.5v2a1.5 1.5 0 0 0 1.5 1.5h12a1.5 1.5 0 0 0 1.5-1.5v-2"/></svg>
+              Export JSON
+            </button>
+            <button type="button" id="importDataBtn" class="btn secondary-btn btn-sm">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4M7.5 8.5 12 4l4.5 4.5"/><path d="M4.5 16.5v2a1.5 1.5 0 0 0 1.5 1.5h12a1.5 1.5 0 0 0 1.5-1.5v-2"/></svg>
+              Import JSON
+            </button>
+            <input type="file" id="importDataInput" accept=".json,application/json" hidden>
+          </div>
+        </div>
       </section>
 
     </div>
@@ -148,8 +186,8 @@
 
 <!-- Details Modal -->
 <div id="detailsModal" class="modal-overlay" style="display:none;">
-  <div class="modal-content glass-panel" id="modalContentBox">
-    <button class="close-btn" onclick="closeModal('detailsModal')">✕</button>
+  <div class="modal-content glass-panel" id="modalContentBox" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <button type="button" class="close-btn" id="detailsCloseBtn" aria-label="Close details">✕</button>
     <div class="modal-body" id="modalDetailsBody">
       <!-- Injected via JS -->
     </div>
@@ -158,14 +196,14 @@
 
 <!-- Player Modal -->
 <div id="playerModal" class="modal-overlay player-overlay" style="display:none;">
-  <div class="player-wrapper">
-    <button class="close-btn" onclick="closePlayer()">✕</button>
+  <div class="player-wrapper" role="dialog" aria-modal="true" aria-label="Video player">
+    <button type="button" class="close-btn" id="playerCloseBtn" aria-label="Close player">✕</button>
     <div id="playerContainer" class="video-container"></div>
   </div>
 </div>
 
 <!-- Toast Notifications -->
-<div id="toastContainer" class="toast-container"></div>
+<div id="toastContainer" class="toast-container" role="status" aria-live="polite"></div>
 
 <script src="script.js"></script>
 </body>
