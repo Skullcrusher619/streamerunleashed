@@ -1549,8 +1549,8 @@ async function startPlayback() {
   }
 
   const src = currentMedia.type === "series"
-    ? `https://vidsrcme.ru/embed/tv/${identifier}/${currentMedia.season}/${currentMedia.episode}`
-    : `https://vidsrcme.ru/embed/movie/${identifier}`;
+    ? `https://vidsrc.sh/embed/tv/${identifier}/${currentMedia.season}/${currentMedia.episode}`
+    : `https://vidsrc.sh/embed/movie/${identifier}`;
 
   const iframe = document.createElement("iframe");
   iframe.src = src;
